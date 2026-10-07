@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Price Prediction</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-1: #fdf1f5;
+            --bg-2: #f6dbe7;
+            --accent: #9d4a6f;
+            --accent-dark: #7a3556;
+            --ink: #3b2a33;
+            --muted: #7d6571;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            color: var(--ink);
+            min-height: 100vh;
+            background: linear-gradient(160deg, var(--bg-1) 0%, var(--bg-2) 100%);
+            background-attachment: fixed;
+        }
+        .container { max-width: 840px; padding-bottom: 48px; }
+
+        h1 {
+            font-weight: 600;
+            font-size: 2rem;
+            letter-spacing: .2px;
+            color: var(--accent-dark);
+        }
+        h1::after {
+            content: "";
+            display: block;
+            width: 56px; height: 3px;
+            margin: 14px auto 0;
+            border-radius: 3px;
+            background: var(--accent);
+        }
+        .subtitle { color: var(--muted); font-size: .95rem; }
+
+        /* كارد الفورم */
+        #predictionForm {
+            background: #ffffff;
+            border: 1px solid #ecd3de;
+            border-radius: 20px;
+            padding: 30px 24px 34px;
+            box-shadow: 0 10px 30px rgba(122, 53, 86, .10);
+            animation: fadeUp .6s ease both;
+        }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(14px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* أسماء الفيتشرز: كبسولات بلون هادي موحد */
+        .form-label {
+            display: inline-block;
+            padding: 5px 16px;
+            margin-bottom: 8px;
+            border-radius: 999px;
+            font-weight: 500;
+            font-size: .82rem;
+            letter-spacing: .3px;
+            color: var(--accent-dark);
+            background: #f8e3ec;
+            border: 1px solid #efc9da;
+            cursor: default;
+            transition: transform .2s ease, background .2s ease, color .2s ease, box-shadow .2s ease;
+        }
+        .form-label:hover {
+            transform: scale(1.06);
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 6px 14px rgba(157, 74, 111, .28);
+        }
+
+        /* الحقول */
+        .form-select {
+            border: 1px solid #e3cdd8;
+            border-radius: 12px;
+            padding: 10px 14px;
+            color: var(--ink);
+            background-color: #fff;
+            transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+        }
+        .form-select:hover {
+            transform: translateY(-1px);
+            border-color: var(--accent);
+            box-shadow: 0 6px 16px rgba(157, 74, 111, .14);
+        }
+        .form-select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 .2rem rgba(157, 74, 111, .18);
+        }
+
+        /* الزر */
+        .btn-predict {
+            border: 0;
+            border-radius: 12px;
+            padding: 12px 54px;
+            font-size: 1.05rem;
+            font-weight: 500;
+            letter-spacing: .4px;
+            color: #fff;
+            background: var(--accent);
+            box-shadow: 0 8px 20px rgba(122, 53, 86, .28);
+            transition: transform .2s ease, background .2s ease, box-shadow .2s ease;
+        }
+        .btn-predict:hover {
+            transform: translateY(-2px) scale(1.04);
+            background: var(--accent-dark);
+            box-shadow: 0 12px 26px rgba(122, 53, 86, .35);
+            color: #fff;
+        }
+        .btn-predict:active { transform: scale(.98); }
+        .btn-predict:disabled { opacity: .8; color: #fff; background: var(--accent); }
+
+        /* النتيجة */
+        .output .alert {
+            border-radius: 14px;
+            font-size: 1.05rem;
+            font-weight: 500;
+            text-align: center;
+            padding: 18px;
+            animation: fadeUp .4s ease both;
+        }
+        .output .alert-success {
+            background: #fff;
+            color: var(--accent-dark);
+            border: 1px solid #e3cdd8;
+            border-left: 5px solid var(--accent);
+            box-shadow: 0 8px 22px rgba(122, 53, 86, .10);
+        }
+        .output .alert-danger {
+            background: #fff;
+            color: #8a2c3f;
+            border: 1px solid #ecc5cc;
+            border-left: 5px solid #c2455c;
+        }
+
+        /* السيارات حوالين العنوان */
+        .title-row { display: flex; align-items: center; justify-content: center; gap: 22px; flex-wrap: wrap; margin-bottom: 4px; }
+        .title-cars { display: flex; align-items: flex-end; gap: 12px; }
+        .title-row h1 { margin: 0; }
+        .car { background: none; border: 0; padding: 0; width: 74px; cursor: pointer; transition: transform .2s ease; -webkit-tap-highlight-color: transparent; }
+        .car svg { width: 100%; height: auto; display: block; filter: drop-shadow(0 4px 4px rgba(122, 53, 86, .22)); }
+        .car.left svg { transform: scaleX(-1); }
+        .car:hover { transform: translateY(-3px) scale(1.1); }
+        .car:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 8px; }
+        .car .wheel { transform-box: fill-box; transform-origin: center; }
+        .car.left { --dx: -34px; }
+        .car.right { --dx: 34px; }
+        .car.go { animation: drive 1s ease-in-out; }
+        .car.go .wheel { animation: spin 1s linear; }
+        @keyframes drive {
+            0%   { transform: translateX(0); }
+            15%  { transform: translateX(-4px) rotate(calc(var(--dx) / -30deg)); }
+            50%  { transform: translateX(var(--dx)); }
+            100% { transform: translateX(0); }
+        }
+        @keyframes spin { to { transform: rotate(900deg); } }
+        @media (max-width: 640px) {
+            .car { width: 52px; }
+            .title-row { gap: 10px; }
+            .title-row h1 { order: -1; width: 100%; font-size: 1.6rem; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .car.go, .car.go .wheel { animation: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="title-row">
+            <div class="title-cars"><button type="button" class="car left" aria-label="Sedan" title="Sedan"><svg viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg"><path d="M6 40 L6 33 Q6 29 12 28 L32 24 L42 14 Q44 12 48 12 L76 12 Q80 12 83 15 L92 25 L108 28 Q114 29 114 34 L114 40 Q114 43 110 43 L10 43 Q6 43 6 40 Z" fill="#9d4a6f"/><path d="M45 24 L51 15 L66 15 L66 24Z" fill="#fff" fill-opacity=".85"/><path d="M70 24 L70 15 L77 15 Q79 15 81 17 L88 24Z" fill="#fff" fill-opacity=".85"/><rect x="106" y="31" width="7" height="4" rx="1.5" fill="#ffe7a8"/><g class="wheel"><circle cx="30" cy="43" r="9" fill="#3b2a33"/><circle cx="30" cy="43" r="4.5" fill="#ead7e0"/><path d="M25.5 43H34.5M30 38.5V47.5" stroke="#9d4a6f" stroke-width="1.4"/></g><g class="wheel"><circle cx="90" cy="43" r="9" fill="#3b2a33"/><circle cx="90" cy="43" r="4.5" fill="#ead7e0"/><path d="M85.5 43H94.5M90 38.5V47.5" stroke="#9d4a6f" stroke-width="1.4"/></g></svg></button><button type="button" class="car left" aria-label="SUV" title="SUV"><svg viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg"><path d="M6 42 L6 28 Q6 24 10 24 L28 22 L36 10 L96 10 Q100 10 102 14 L106 24 L112 27 Q114 28 114 32 L114 42 Q114 45 110 45 L10 45 Q6 45 6 42Z" fill="#6f5a7d"/><path d="M38 22 L42 13 L60 13 L60 22Z" fill="#fff" fill-opacity=".85"/><path d="M64 22 L64 13 L80 13 L80 22Z" fill="#fff" fill-opacity=".85"/><path d="M84 22 L84 13 L94 13 Q97 13 98 16 L101 22Z" fill="#fff" fill-opacity=".85"/><rect x="40" y="6" width="50" height="2.5" rx="1" fill="#3b2a33"/><rect x="107" y="30" width="6" height="4" rx="1.5" fill="#ffe7a8"/><g class="wheel"><circle cx="30" cy="45" r="10" fill="#3b2a33"/><circle cx="30" cy="45" r="5.0" fill="#ead7e0"/><path d="M25.0 45H35.0M30 40.0V50.0" stroke="#9d4a6f" stroke-width="1.4"/></g><g class="wheel"><circle cx="90" cy="45" r="10" fill="#3b2a33"/><circle cx="90" cy="45" r="5.0" fill="#ead7e0"/><path d="M85.0 45H95.0M90 40.0V50.0" stroke="#9d4a6f" stroke-width="1.4"/></g></svg></button></div>
+            <h1 class="text-center">Car Price Prediction</h1>
+            <div class="title-cars"><button type="button" class="car right" aria-label="Hatchback" title="Hatchback"><svg viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg"><path d="M10 42 L10 32 Q10 28 15 27 L34 24 L44 13 Q46 11 50 11 L80 11 Q84 11 86 14 L96 28 L108 31 Q112 32 112 36 L112 42 Q112 45 108 45 L14 45 Q10 45 10 42Z" fill="#c9708f"/><path d="M46 24 L52 14 L66 14 L66 24Z" fill="#fff" fill-opacity=".85"/><path d="M70 24 L70 14 L80 14 Q82 14 83 16 L90 24Z" fill="#fff" fill-opacity=".85"/><rect x="104" y="33" width="6" height="4" rx="1.5" fill="#ffe7a8"/><g class="wheel"><circle cx="32" cy="45" r="9" fill="#3b2a33"/><circle cx="32" cy="45" r="4.5" fill="#ead7e0"/><path d="M27.5 45H36.5M32 40.5V49.5" stroke="#9d4a6f" stroke-width="1.4"/></g><g class="wheel"><circle cx="88" cy="45" r="9" fill="#3b2a33"/><circle cx="88" cy="45" r="4.5" fill="#ead7e0"/><path d="M83.5 45H92.5M88 40.5V49.5" stroke="#9d4a6f" stroke-width="1.4"/></g></svg></button><button type="button" class="car right" aria-label="Coupe" title="Coupe"><svg viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg"><path d="M4 42 L4 36 Q4 32 10 31 L40 27 L56 17 Q58 16 62 16 L80 16 Q84 16 87 19 L96 28 L110 31 Q116 32 116 37 L116 42 Q116 44 112 44 L8 44 Q4 44 4 42Z" fill="#7a3556"/><path d="M58 26 L64 19 L78 19 Q80 19 82 21 L88 26Z" fill="#fff" fill-opacity=".85"/><rect x="108" y="33" width="6" height="3.5" rx="1.5" fill="#ffe7a8"/><g class="wheel"><circle cx="28" cy="44" r="8.5" fill="#3b2a33"/><circle cx="28" cy="44" r="4.2" fill="#ead7e0"/><path d="M23.8 44H32.2M28 39.8V48.2" stroke="#9d4a6f" stroke-width="1.4"/></g><g class="wheel"><circle cx="92" cy="44" r="8.5" fill="#3b2a33"/><circle cx="92" cy="44" r="4.2" fill="#ead7e0"/><path d="M87.8 44H96.2M92 39.8V48.2" stroke="#9d4a6f" stroke-width="1.4"/></g></svg></button></div>
+        </div>
+        <p class="text-center subtitle">Fill in the details below to predict the car price category:</p>
+
+        <form id="predictionForm" class="row g-3">
+            <!-- Row 1 -->
+            <div class="col-md-6">
+                <label for="Levy" class="form-label">Levy</label>
+                <select id="Levy" name="Levy" class="form-select" required>
+                    <option value="">-- Select Levy --</option>
+                    <option value="0">0</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="150">150</option>
+                    <option value="200">200</option>
+                    <option value="250">250</option>
+                    <option value="300">300</option>
+                    <option value="350">350</option>
+                    <option value="400">400</option>
+                    <option value="450">450</option>
+                    <option value="500">500</option>
+                    <option value="550">550</option>
+                    <option value="600">600</option>
+                    <option value="650">650</option>
+                    <option value="700">700</option>
+                    <option value="750">750</option>
+                    <option value="800">800</option>
+                    <option value="850">850</option>
+                    <option value="900">900</option>
+                    <option value="950">950</option>
+                    <option value="1000">1000</option>
+                    <option value="1050">1050</option>
+                    <option value="1100">1100</option>
+                    <option value="1150">1150</option>
+                    <option value="1200">1200</option>
+                    <option value="1250">1250</option>
+                    <option value="1300">1300</option>
+                    <option value="1350">1350</option>
+                    <option value="1400" selected>1400</option>
+                    <option value="1450">1450</option>
+                    <option value="1500">1500</option>
+                    <option value="1550">1550</option>
+                    <option value="1600">1600</option>
+                    <option value="1650">1650</option>
+                    <option value="1700">1700</option>
+                    <option value="1750">1750</option>
+                    <option value="1800">1800</option>
+                    <option value="1850">1850</option>
+                    <option value="1900">1900</option>
+                    <option value="1950">1950</option>
+                    <option value="2000">2000</option>
+                    <option value="2050">2050</option>
+                    <option value="2100">2100</option>
+                    <option value="2150">2150</option>
+                    <option value="2200">2200</option>
+                    <option value="2250">2250</option>
+                    <option value="2300">2300</option>
+                    <option value="2350">2350</option>
+                    <option value="2400">2400</option>
+                    <option value="2450">2450</option>
+                    <option value="2500">2500</option>
+                    <option value="2550">2550</option>
+                    <option value="2600">2600</option>
+                    <option value="2650">2650</option>
+                    <option value="2700">2700</option>
+                    <option value="2750">2750</option>
+                    <option value="2800">2800</option>
+                    <option value="2850">2850</option>
+                    <option value="2900">2900</option>
+                    <option value="2950">2950</option>
+                    <option value="3000">3000</option>
+                    <option value="4000">4000</option>
+                    <option value="5000">5000</option>
+                    <option value="6000">6000</option>
+                    <option value="8000">8000</option>
+                    <option value="10000">10000</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label for="Prod_year" class="form-label">Production Year</label>
+                <select id="Prod_year" name="Prod_year" class="form-select" required>
+                    <option value="">-- Select Year --</option>
+                    <option value="2020" selected>2020</option>
+                    <option value="2019">2019</option>
+                    <option value="2018">2018</option>
+                    <option value="2017">2017</option>
+                    <option value="2016">2016</option>
+                    <option value="2015">2015</option>
+                    <option value="2014">2014</option>
+                    <option value="2013">2013</option>
+                    <option value="2012">2012</option>
+                    <option value="2011">2011</option>
+                    <option value="2010">2010</option>
+                    <option value="2009">2009</option>
+                    <option value="2008">2008</option>
+                    <option value="2007">2007</option>
+                    <option value="2006">2006</option>
+                    <option value="2005">2005</option>
+                    <option value="2004">2004</option>
+                    <option value="2003">2003</option>
+                    <option value="2002">2002</option>
+                    <option value="2001">2001</option>
+                    <option value="2000">2000</option>
+                    <option value="1999">1999</option>
+                    <option value="1998">1998</option>
+                    <option value="1997">1997</option>
+                    <option value="1996">1996</option>
+                    <option value="1995">1995</option>
+                    <option value="1994">1994</option>
+                    <option value="1993">1993</option>
+                    <option value="1992">1992</option>
+                    <option value="1991">1991</option>
+                    <option value="1990">1990</option>
+                    <option value="1989">1989</option>
+                    <option value="1988">1988</option>
+                    <option value="1987">1987</option>
+                    <option value="1986">1986</option>
+                    <option value="1985">1985</option>
+                    <option value="1984">1984</option>
+                    <option value="1983">1983</option>
+                    <option value="1982">1982</option>
+                    <option value="1981">1981</option>
+                    <option value="1980">1980</option>
+                    <option value="1978">1978</option>
+                    <option value="1977">1977</option>
+                    <option value="1976">1976</option>
+                    <option value="1974">1974</option>
+                    <option value="1973">1973</option>
+                    <option value="1968">1968</option>
+                    <option value="1965">1965</option>
+                    <option value="1964">1964</option>
+                    <option value="1957">1957</option>
+                    <option value="1953">1953</option>
+                    <option value="1947">1947</option>
+                    <option value="1943">1943</option>
+                    <option value="1939">1939</option>
+                </select>
+            </div>
+
+            <!-- Row 2 -->
+            <div class="col-md-6">
+                <label for="Manufacturer" class="form-label">Manufacturer</label>
+                <select id="Manufacturer" name="Manufacturer" class="form-select" required>
+                    <option value="">-- Select Manufacturer --</option>
+                    <option>LEXUS</option>
+                    <option>CHEVROLET</option>
+                    <option>HONDA</option>
+                    <option>FORD</option>
+                    <option>HYUNDAI</option>
+                    <option>TOYOTA</option>
+                    <option>MERCEDES-BENZ</option>
+                    <option>OPEL</option>
+                    <option>PORSCHE</option>
+                    <option>BMW</option>
+                    <option>JEEP</option>
+                    <option>VOLKSWAGEN</option>
+                    <option>AUDI</option>
+                    <option>RENAULT</option>
+                    <option>NISSAN</option>
+                    <option>SUBARU</option>
+                    <option>DAEWOO</option>
+                    <option>KIA</option>
+                    <option>MITSUBISHI</option>
+                    <option>SSANGYONG</option>
+                    <option>MAZDA</option>
+                    <option>GMC</option>
+                    <option>FIAT</option>
+                    <option>INFINITI</option>
+                    <option>ALFA ROMEO</option>
+                    <option>SUZUKI</option>
+                    <option>ACURA</option>
+                    <option>LINCOLN</option>
+                    <option>VAZ</option>
+                    <option>GAZ</option>
+                    <option>CITROEN</option>
+                    <option>LAND ROVER</option>
+                    <option>MINI</option>
+                    <option>DODGE</option>
+                    <option>CHRYSLER</option>
+                    <option>JAGUAR</option>
+                    <option>ISUZU</option>
+                    <option>SKODA</option>
+                    <option>DAIHATSU</option>
+                    <option>BUICK</option>
+                    <option>TESLA</option>
+                    <option>CADILLAC</option>
+                    <option>PEUGEOT</option>
+                    <option>BENTLEY</option>
+                    <option>VOLVO</option>
+                    <option>HAVAL</option>
+                    <option>HUMMER</option>
+                    <option>SCION</option>
+                    <option>UAZ</option>
+                    <option>MERCURY</option>
+                    <option>ZAZ</option>
+                    <option>ROVER</option>
+                    <option>SEAT</option>
+                    <option>LANCIA</option>
+                    <option>MOSKVICH</option>
+                    <option>MASERATI</option>
+                    <option>FERRARI</option>
+                    <option>SAAB</option>
+                    <option>LAMBORGHINI</option>
+                    <option>ROLLS-ROYCE</option>
+                    <option>PONTIAC</option>
+                    <option>SATURN</option>
+                    <option>ASTON MARTIN</option>
+                    <option>GREATWALL</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label for="Model" class="form-label">Model</label>
+                <select id="Model" name="Model" class="form-select" required>
+                    <option value="">-- Select Model --</option>
+                </select>
+            </div>
+
+            <!-- Row 3 -->
+            <div class="col-md-6">
+                <label for="Category" class="form-label">Category</label>
+                <select id="Category" name="Category" class="form-select" required>
+                    <option value="">-- Select Category --</option>
+                    <option selected>Jeep</option>
+                    <option>Hatchback</option>
+                    <option>Sedan</option>
+                    <option>Microbus</option>
+                    <option>Goods wagon</option>
+                    <option>Universal</option>
+                    <option>Coupe</option>
+                    <option>Minivan</option>
+                    <option>Cabriolet</option>
+                    <option>Limousine</option>
+                    <option>Pickup</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label for="Fuel_type" class="form-label">Fuel Type</label>
+                <select id="Fuel_type" name="Fuel_type" class="form-select" required>
+                    <option value="">-- Select Fuel Type --</option>
+                    <option selected>Hybrid</option>
+                    <option>Petrol</option>
+                    <option>Diesel</option>
+                    <option>LPG</option>
+                    <option>CNG</option>
+                    <option>Plug-in Hybrid</option>
+                    <option>Hydrogen</option>
+                </select>
+            </div>
+
+            <!-- Row 4 -->
+            <div class="col-md-6">
+                <label for="Leather_interior" class="form-label">Leather Interior</label>
+                <select id="Leather_interior" name="Leather_interior" class="form-select" required>
+                    <option value="">-- Select Option --</option>
+                    <option value="Yes" selected>Yes</option>
+                    <option value="No">No</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label for="Gear_box_type" class="form-label">Gear Box Type</label>
+                <select id="Gear_box_type" name="Gear_box_type" class="form-select" required>
+                    <option value="">-- Select Gear Box Type --</option>
+                    <option selected>Automatic</option>
+                    <option>Tiptronic</option>
+                    <option>Manual</option>
+                    <option>Variator</option>
+                </select>
+            </div>
+
+            <!-- Row 5 -->
+            <div class="col-md-6">
+                <label for="Engine_volume" class="form-label">Engine Volume</label>
+                <select id="Engine_volume" name="Engine_volume" class="form-select" required>
+                    <option value="">-- Select Engine Volume --</option>
+                    <option value="0.1">0.1</option>
+                    <option value="0.2">0.2</option>
+                    <option value="0.3">0.3</option>
+                    <option value="0.4">0.4</option>
+                    <option value="0.5">0.5</option>
+                    <option value="0.6">0.6</option>
+                    <option value="0.7">0.7</option>
+                    <option value="0.8">0.8</option>
+                    <option value="0.9">0.9</option>
+                    <option value="1">1</option>
+                    <option value="1.1">1.1</option>
+                    <option value="1.2">1.2</option>
+                    <option value="1.3">1.3</option>
+                    <option value="1.4">1.4</option>
+                    <option value="1.5">1.5</option>
+                    <option value="1.6">1.6</option>
+                    <option value="1.7">1.7</option>
+                    <option value="1.8">1.8</option>
+                    <option value="1.9">1.9</option>
+                    <option value="2">2</option>
+                    <option value="2.1">2.1</option>
+                    <option value="2.2">2.2</option>
+                    <option value="2.3">2.3</option>
+                    <option value="2.4">2.4</option>
+                    <option value="2.5">2.5</option>
+                    <option value="2.6">2.6</option>
+                    <option value="2.7">2.7</option>
+                    <option value="2.8">2.8</option>
+                    <option value="2.9">2.9</option>
+                    <option value="3">3</option>
+                    <option value="3.1">3.1</option>
+                    <option value="3.2">3.2</option>
+                    <option value="3.3">3.3</option>
+                    <option value="3.4">3.4</option>
+                    <option value="3.5">3.5</option>
+                    <option value="3.6">3.6</option>
+                    <option value="3.7">3.7</option>
+                    <option value="3.8">3.8</option>
+                    <option value="3.9">3.9</option>
+                    <option value="4" selected>4</option>
+                    <option value="4.2">4.2</option>
+                    <option value="4.3">4.3</option>
+                    <option value="4.4">4.4</option>
+                    <option value="4.5">4.5</option>
+                    <option value="4.6">4.6</option>
+                    <option value="4.7">4.7</option>
+                    <option value="4.8">4.8</option>
+                    <option value="5">5</option>
+                    <option value="5.2">5.2</option>
+                    <option value="5.3">5.3</option>
+                    <option value="5.4">5.4</option>
+                    <option value="5.5">5.5</option>
+                    <option value="5.6">5.6</option>
+                    <option value="5.7">5.7</option>
+                    <option value="5.8">5.8</option>
+                    <option value="5.9">5.9</option>
+                    <option value="6">6</option>
+                    <option value="6.2">6.2</option>
+                    <option value="6.3">6.3</option>
+                    <option value="6.4">6.4</option>
+                    <option value="6.7">6.7</option>
+                    <option value="6.8">6.8</option>
+                    <option value="7.3">7.3</option>
+                    <option value="20">20</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label for="Mileage" class="form-label">Mileage (km)</label>
+                <select id="Mileage" name="Mileage" class="form-select" required>
+                    <option value="">-- Select Mileage --</option>
+                    <option value="0">0</option>
+                    <option value="10000">10,000</option>
+                    <option value="20000">20,000</option>
+                    <option value="30000">30,000</option>
+                    <option value="40000">40,000</option>
+                    <option value="50000">50,000</option>
+                    <option value="60000">60,000</option>
+                    <option value="70000">70,000</option>
+                    <option value="80000">80,000</option>
+                    <option value="90000">90,000</option>
+                    <option value="100000">100,000</option>
+                    <option value="110000">110,000</option>
+                    <option value="120000">120,000</option>
+                    <option value="130000">130,000</option>
+                    <option value="140000">140,000</option>
+                    <option value="150000">150,000</option>
+                    <option value="160000" selected>160,000</option>
+                    <option value="170000">170,000</option>
+                    <option value="180000">180,000</option>
+                    <option value="190000">190,000</option>
+                    <option value="200000">200,000</option>
+                    <option value="210000">210,000</option>
+                    <option value="220000">220,000</option>
+                    <option value="230000">230,000</option>
+                    <option value="240000">240,000</option>
+                    <option value="250000">250,000</option>
+                    <option value="260000">260,000</option>
+                    <option value="270000">270,000</option>
+                    <option value="280000">280,000</option>
+                    <option value="290000">290,000</option>
+                    <option value="300000">300,000</option>
+                    <option value="310000">310,000</option>
+                    <option value="320000">320,000</option>
+                    <option value="330000">330,000</option>
+                    <option value="340000">340,000</option>
+                    <option value="350000">350,000</option>
+                    <option value="360000">360,000</option>
+                    <option value="370000">370,000</option>
+                    <option value="380000">380,000</option>
+                    <option value="390000">390,000</option>
+                    <option value="400000">400,000</option>
+                    <option value="410000">410,000</option>
+                    <option value="420000">420,000</option>
+                    <option value="430000">430,000</option>
+                    <option value="440000">440,000</option>
+                    <option value="450000">450,000</option>
+                    <option value="460000">460,000</option>
+                    <option value="470000">470,000</option>
+                    <option value="480000">480,000</option>
+                    <option value="490000">490,000</option>
+                    <option value="500000">500,000</option>
+                    <option value="750000">750,000</option>
+                    <option value="1000000">1,000,000</option>
+                </select>
+            </div>
+
+            <!-- Row 6 -->
+            <div class="col-md-6">
+                <label for="Wheel" class="form-label">Wheel</label>
+                <select id="Wheel" name="Wheel" class="form-select" required>
+                    <option value="">-- Select Wheel Position --</option>
+                    <option selected>Left wheel</option>
+                    <option>Right-hand drive</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label for="Color" class="form-label">Color</label>
+                <select id="Color" name="Color" class="form-select" required>
+                    <option value="">-- Select Color --</option>
+                    <option selected>Silver</option>
+                    <option>Black</option>
+                    <option>White</option>
+                    <option>Grey</option>
+                    <option>Blue</option>
+                    <option>Beige</option>
+                    <option>Sky blue</option>
+                    <option>Yellow</option>
+                    <option>Purple</option>
+                    <option>Pink</option>
+                </select>
+            </div>
+
+            <!-- Row 7 -->
+            <div class="col-md-6">
+                <label for="Drive_wheels" class="form-label">Drive Wheels</label>
+                <select id="Drive_wheels" name="Drive_wheels" class="form-select" required>
+                    <option value="">-- Select Drive Wheels --</option>
+                    <option value="4x4" selected>4x4</option>
+                    <option value="Front">Front</option>
+                    <option value="Rear">Rear</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label for="Airbags" class="form-label">Airbags</label>
+                <select id="Airbags" name="Airbags" class="form-select" required>
+                    <option value="">-- Select Airbags --</option>
+                    <option value="0">0</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                    <option value="11">11</option>
+                    <option value="12" selected>12</option>
+                    <option value="13">13</option>
+                    <option value="14">14</option>
+                    <option value="15">15</option>
+                    <option value="16">16</option>
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label for="Cylinders" class="form-label">Cylinders</label>
+                <select id="Cylinders" name="Cylinders" class="form-select" required>
+                    <option value="">-- Select Cylinders --</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6" selected>6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                    <option value="12">12</option>
+                    <option value="14">14</option>
+                    <option value="16">16</option>
+                </select>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="col-12 text-center">
+                <button type="button" onclick="submitForm()" id="predictBtn" class="btn btn-predict">Predict</button>
+            </div>
+        </form>
+
+        <!-- Output Section -->
+        <div class="output mt-4" id="output"></div>
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script>
+        // الموديلات الحقيقية لكل شركة (مأخوذة من داتا التدريب)
+        const modelsByManufacturer = {"ACURA": ["MDX", "RDX", "TL", "TL saber", "TLX", "TSX"], "ALFA ROMEO": ["147", "159", "166", "Giulietta"], "ASTON MARTIN": ["Virage"], "AUDI": ["100", "50", "A3", "A3 4X4", "A3 PREMIUM", "A4", "A4 B5", "A4 B6", "A4 B7", "A4 S line", "A4 S4", "A4 Sline", "A4 premium", "A4 premium plius", "A5", "A5 Sportback", "A6", "A6 C7", "A6 QUATTRO", "A6 UNIVERSAL", "A6 evropuli", "A6 premium plus", "A6 С6", "A7", "A7 Prestige", "A8", "Allroad", "Allroad Allroad", "Q3", "Q5", "Q5 Prestige", "Q5 S-line", "Q7", "Q7 sport", "RS6", "RS7", "S3", "S6", "TT"], "BENTLEY": ["Continental GT", "Mulsanne"], "BMW": ["114", "116", "118", "118 2,0", "118 M-sport LCI", "120", "128", "128 M tech", "130", "135", "225", "3.18E+38", "3.20E+38", "3.25E+48", "316", "316 1995", "316 i", "318", "318 318", "318 m", "318 რესტაილინგი", "318 სასწრაფოდ", "320", "320 2.0", "320 2.2", "320 320", "320 DIESEL", "320 Diesel", "320 Gran Turismo", "320 I", "320 M", "320 i", "323", "325", "325 CI", "325 XI", "325 i", "328", "328 DIZEL", "328 DRIFT CAR", "328 Xdrive", "328 i", "328 sulev", "330", "335", "335 335i", "335 D", "335 M paket", "335 ტურბო", "340", "420", "428", "428 Sport Line", "428 i", "435", "435 CUPE", "5.30E+62", "520", "520 I", "520 Vanos", "520 d xDrive Luxury", "523", "525", "525 ///M", "525 525", "525 TDI", "525 Vanos", "525 i", "528", "528 3.0", "528 i", "530", "530 525i", "530 G30", "530 GT", "530 I", "530 M", "530 i", "535", "535 535", "535 Diesel", "535 I", "535 M", "535 M PAKET", "535 Twinturbo", "535 XI", "535 comfort-sport", "535 i", "535 i xDrive", "540 I", "545", "550", "550 F10", "550 GT", "550 M Packet", "630", "635", "640", "640 GRAN-COUPE", "640 M", "645", "645 CI", "650", "650 450 HP", "7.30E+34", "730", "730 3.0", "735", "740", "740 i", "745", "745 i", "750", "750 4.8", "M3", "M4", "M4 Competition", "M5", "M5 Japan", "M5 Машина в максимально", "M550", "M6", "M6 Gran cupe", "X1", "X1 28Xdrive", "X1 4X4", "X1 X-Drive", "X3", "X3 3.5i", "X3 SDRIVE", "X4", "X5", "X5 3.0", "X5 3.0i", "X5 3.5", "X5 35d", "X5 4,4i", "X5 4.8is", "X5 DIESEL", "X5 E70", "X5 Japan", "X5 M", "X5 M packet", "X5 Sport", "X5 X-Drive", "X5 XDRIVE", "X5 XDRIVE 35D", "X5 e53", "X5 rest", "X5 restilling", "X5 x5", "X6", "X6 40D", "X6 GERMANY", "X6 Limited", "X6 M", "Z4", "Z4 3,0 SI", "i3"], "BUICK": ["Century", "Enclave", "Encore", "Regal"], "CADILLAC": ["ATS", "Allante", "CTS", "Catera", "DTS", "Escalade", "SRX"], "CHEVROLET": ["1500", "Avalanche", "Aveo", "Camaro", "Camaro LS", "Camaro RS", "Captiva", "Colorado", "Corvette", "Cruze", "Cruze Cruze", "Cruze L T", "Cruze LS", "Cruze LT", "Cruze LT RS", "Cruze LTZ", "Cruze PREMIER", "Cruze Premier", "Cruze RS", "Cruze S", "Cruze ltz", "Cruze sonic", "Cruze strocna", "Equinox", "Equinox LT", "HHR", "Impala", "Kalos", "Lacetti", "Malibu", "Malibu Hybrid", "Malibu LT", "Malibu eco", "Matiz", "Niva", "Nubira", "Orlando", "Silverado", "Sonic", "Sonic LT", "Spark", "Suburban", "Trailblazer", "Traverse", "Trax", "Volt", "Volt Full Packet", "Volt PREMIER", "Volt Premier", "Volt premier"], "CHRYSLER": ["200", "300", "300 LIMITED", "Crossfire", "PT Cruiser", "PT Cruiser pt cruiser", "Pacifica", "Sebring", "Town and Country"], "CITROEN": ["Berlingo", "C1", "C1 C", "C4", "C5", "C8", "DS 4"], "DAEWOO": ["Gentra", "Lacetti", "Matiz"], "DAIHATSU": ["Feroza", "Mira", "Move", "Sirion", "Terios", "YRV"], "DODGE": ["Avenger", "Caliber", "Caliber journey", "Caliber sxt", "Caravan", "Caravan tradesman", "Challenger", "Charger RT", "Dart", "Dart GT 2.4", "Dart Limited", "Durango", "Intrepid", "Journey", "Neon", "RAM", "RAM 1500", "Ramcharger"], "FERRARI": ["456", "F50"], "FIAT": ["500", "500 46 ml", "500 Abarth", "500 Abarth ტურბო", "500 Lounge", "500 SPORT", "500 Sport", "500 s", "500 sport", "500 sport panorama", "500 turbo", "500C", "500C Lounge", "500L", "500L LONG", "500X", "500X Lounge", "Cinquecento", "Doblo", "Panda", "Punto", "Seicento fiat 600"], "FORD": ["B-MAX", "C-MAX", "C-MAX C-MAX", "C-MAX HYBRID", "C-MAX PREMIUM", "C-MAX SE", "C-MAX SEL", "Cougar", "Courier", "EcoSport", "EcoSport SE", "Edge", "Escape", "Escape 3.0", "Escape HYBRID", "Escape Hybrid", "Escape SE", "Escape Titanium", "Escape escape", "Escape მერკური მერინერი", "Escape სასწრაფოდ", "Escort", "Expedition", "Explorer", "Explorer Turbo japan", "Explorer XLT", "F150", "Fiesta", "Fiesta 1.6", "Fiesta SE", "Focus", "Focus Flexfuel", "Focus Fokusi", "Focus SE", "Focus SEL", "Focus ST", "Focus TITANIUM", "Focus Titanium", "Focus se", "Fusion", "Fusion 1.6", "Fusion 2015", "Fusion Bybrid", "Fusion HIBRID", "Fusion HYBRID", "Fusion HYBRID SE", "Fusion Hybrid", "Fusion SE", "Fusion TITANIUM", "Fusion Titanium", "Fusion hybrid", "Fusion phev", "Galaxy", "KA", "Maverick", "Mondeo", "Mustang", "Mustang cabrio", "Mustang ecoboost", "Ranger", "Ranger Wildtrak", "S-max", "Scorpio", "Sierra", "Sierra DIZEL", "Taurus", "Taurus X", "Taurus interceptor", "Tourneo Connect", "Transit", "Transit 100LD", "Transit 135", "Transit 2.4", "Transit 350T", "Transit CL", "Transit Connect", "Transit Connect Prastoi", "Transit Connect ბენზინი", "Transit Custom", "Transit Fff", "Transit S", "Transit T330", "Transit Tourneo", "Transit ford", "Transit პერეგაროტკა"], "GAZ": ["20", "21", "21 3.0", "24", "24 10", "3110", "31105", "32214", "322173", "3796"], "GMC": ["Acadia", "Envoy", "TERRAIN", "Yukon"], "GREATWALL": ["C30"], "HAVAL": ["H6"], "HONDA": ["400X", "Accord", "Accord CL9 type S", "CR-Z", "CR-Z ჰიბრიდი", "CRX", "Civic", "Civic EX", "Civic Ferio", "Civic Hybrid", "Cr-v", "Cr-v Cr-v", "Cr-v LX", "Crossroad", "Crosstour", "Edix", "Edix FR-v", "Element", "Elysion", "Elysion 3.0", "FIT", "FIT \"S\"- PAKETI.", "FIT GP-5", "FIT GP-6", "FIT HIBRID", "FIT HYBRYD", "FIT Hbrid", "FIT Hybrid", "FIT LX", "FIT Modulo", "FIT NAVI PREMIUM", "FIT PREMIUM PAKETI", "FIT PREMIUMI", "FIT Premiym", "FIT RS", "FIT RS MODELI", "FIT RS MUGEN", "FIT S", "FIT SPORT", "FIT Sport", "FIT ex", "FIT fit", "Fit Aria", "Fred", "Fred HIBRIDI", "Hr-v", "Hr-v EX", "Hr-v EXL", "Insight", "Insight EX", "Insight LX", "Inspire", "Integra", "Legend FULL", "Odyssey", "Passport", "Pilot", "Ridgeline", "Shuttle", "Step Wagon", "Step Wagon Pada", "Step Wagon RG2 SPADA", "Stream"], "HUMMER": ["H2", "H3"], "HYUNDAI": ["Accent", "Accent GS", "Accent SE", "Azera", "Elantra", "Elantra 2014", "Elantra 2016", "Elantra GLS / LIMITED", "Elantra GS", "Elantra GT", "Elantra Gt", "Elantra LIMITED", "Elantra LIMITEDI", "Elantra Limited", "Elantra SE", "Elantra Se", "Elantra gt", "Elantra i30", "Elantra limited", "Elantra se", "Elantra sport limited", "Galloper", "Genesis", "Getz", "Grandeur", "H1", "H1 GRAND STAREX", "H1 grandstarex", "H1 starixs", "I30", "IX35", "IX35 2.0", "Ioniq", "Lantra", "Lantra LIMITED", "Santa FE", "Santa FE Ultimate", "Santa FE long", "Santa FE sport", "Sonata", "Sonata 2.0t", "Sonata 2.4L", "Sonata HYBRID", "Sonata Hibrid", "Sonata Hybrid", "Sonata LIMITED", "Sonata LPG", "Sonata Limited", "Sonata S", "Sonata SE", "Sonata SE LIMITED", "Sonata SPORT", "Sonata Sport", "Sonata blue edition", "Sonata hybrid", "Sonata sport", "Sonata სასწრაფოდ", "Tucson", "Tucson Limited", "Tucson SE", "Tucson Se", "Tucson TURBO", "Veloster", "Veloster R-spec", "Veloster TURBO", "Veloster Turbo", "Veloster remix", "Veracruz", "i20", "i40", "kona"], "INFINITI": ["EX35", "EX37", "FX35", "FX45", "G20", "G35 x", "G37", "JX35", "M37", "Q45", "Q50 S Red", "QX56", "QX60", "QX80"], "ISUZU": ["Rodeo", "VehiCross", "Wizard"], "JAGUAR": ["Daimler", "E-pace", "E-pace p200", "F-pace", "F-type", "F-type R", "S-type", "X-type", "XE", "XF", "XJ", "XK"], "JEEP": ["Cherokee", "Compass", "Grand Cherokee", "Grand Cherokee LAREDO", "Grand Cherokee Saiubileo", "Grand Cherokee special e", "Liberty", "Patriot", "Patriot 70th anniversary", "Patriot Latitude", "Renegade", "Wrangler", "Wrangler ARB", "Wrangler sport"], "KIA": ["Avella", "Cadenza", "Carens", "Carnival", "Carnival grand", "Ceed", "Cerato", "Cerato K3", "Forte", "Niro", "Optima", "Optima ECO", "Optima EX", "Optima HYBRID", "Optima Hybrid", "Optima SXL", "Optima X", "Optima ex", "Optima hybid", "Optima hybrid", "Optima k5", "Picanto", "RIO", "RIO lX", "RIO lx", "SOUL", "Sorento", "Sorento EX", "Sorento SX", "Sportage", "Sportage EX", "Sportage PRESTIGE", "Sportage SX"], "LAMBORGHINI": ["Urus"], "LANCIA": ["Musa"], "LAND ROVER": ["Defender 90 Cabrio", "Discovery", "Discovery IV", "Discovery LR3", "Freelander", "Land Rover Sport", "Range Rover", "Range Rover Evoque", "Range Rover Evoque 2.0", "Range Rover Evoque რესტა", "Range Rover VOGUE", "Range Rover Velar", "Range Rover Vogue"], "LEXUS": ["CT 200h", "CT 200h 1.8", "CT 200h F SPORT", "CT 200h F sport", "CT 200h F-sport", "ES 300", "ES 300 hybrid", "ES 350", "GS 300", "GS 350", "GS 450", "GX 460", "GX 470", "GX 470 470", "GX 470 SUV 4D (4.7L V8 S", "HS 250h", "HS 250h Hybrid", "IS 200", "IS 250", "IS 250 TURBO", "IS 250 რესტაილინგი", "IS 300", "IS 350", "IS 350 C", "IS-F", "LS 460", "LX 470", "LX 570", "NX 200", "NX 300", "RC F", "RC F F SPORT", "RX 300", "RX 350", "RX 350 F sport", "RX 400", "RX 400 H", "RX 400 HYBRID", "RX 400 RESTAILING", "RX 400 hybrid", "RX 450", "RX 450 F SPORT", "RX 450 H", "RX 450 HYBRID"], "LINCOLN": ["Continental", "MKZ", "MKZ hybrid", "Navigator", "Town Car"], "MASERATI": ["Ghibli", "Quattroporte"], "MAZDA": ["1000", "1300", "323", "323 F", "616", "626", "Atenza", "Axela", "CX-3", "CX-5", "CX-5 Touring", "CX-7", "CX-9", "Demio", "Demio 12", "Demio Sport", "Demio evropuli", "Demio mazda2", "Eunos 500", "MPV", "MPV LX", "Mazda 2", "Mazda 3", "Mazda 3 SPORT", "Mazda 5", "Mazda 6", "Mazda 6 Grand Touring", "Mazda 6 Grand touring", "Mazda 6 TOURING", "Millenia", "Mx-5", "Premacy", "Protege", "Rx-8", "Tribute", "Tribute სასწრაფოდ", "Verisa", "Verisa 2007"], "MERCEDES-BENZ": ["190", "200", "208", "220", "230", "230 W153", "240", "250", "270", "280", "290", "300", "311", "320", "416", "A 140", "A 140 140", "A 160", "A 170", "A 170 Avangard", "A 170 CDI", "A 190", "A 200", "AMG GT S", "B 170", "B 170 B Class", "B 170 Edition One", "B 180", "B 200", "B 200 Turbo", "B 220", "C 180", "C 180 2.0", "C 180 komp", "C 200", "C 200 2.0", "C 200 7G-TRONIC", "C 200 KOMPRESSOR", "C 200 Kompressor", "C 220", "C 220 CDI", "C 230", "C 230 2.0 kompresor", "C 230 2.5", "C 230 kompresor", "C 240", "C 240 W 203", "C 240 w203", "C 250", "C 250 1,8 turbo", "C 250 1.8", "C 250 1.8 ტურბო", "C 250 A.M.G", "C 250 AMG", "C 250 AMG-PAKET-1,8", "C 250 luxury", "C 270", "C 280", "C 300", "C 300 4matic", "C 300 6.3 AMG Package", "C 300 sport", "C 32 AMG", "C 320", "C 320 AMG", "C 320 CDI", "C 350", "C 36 AMG", "C 400", "C 43 AMG", "C 63 AMG", "CL 500", "CL 55 AMG KOMPRESSOR", "CL 550", "CL 600", "CL550 AMG", "CLA 250", "CLA 250 AMG", "CLA 45 AMG", "CLK 200", "CLK 200 200", "CLK 200 208", "CLK 200 Kompressor", "CLK 200 kompresor", "CLK 230", "CLK 230 .", "CLK 240", "CLK 270", "CLK 280", "CLK 320", "CLK 320 AMG", "CLK 320 avangarde", "CLK 350", "CLK 430", "CLK 55 AMG", "CLS 350", "CLS 350 AMG", "CLS 350 JAPAN", "CLS 450 CLS 400", "CLS 500", "CLS 55 AMG", "CLS 550", "CLS 550 550", "CLS 63 AMG", "Citan", "E 200", "E 200 2000", "E 200 CGI", "E 200 w210", "E 220", "E 220 211", "E 220 CDI", "E 220 ELEGANCE", "E 220 W210...CDI", "E 220 cdi", "E 230", "E 230 124", "E 240", "E 240 E 240", "E 250", "E 260", "E 270", "E 270 4", "E 270 AVANGARDI", "E 270 CDI", "E 280", "E 280 3.0", "E 280 CDI", "E 290", "E 300", "E 300 AVANTGARDE-LTD", "E 320", "E 320 4matic", "E 320 4×4", "E 320 bluetec", "E 350", "E 350 212", "E 350 4 MATIC", "E 350 4 Matic AMG Packag", "E 350 4 matic", "E 350 AMG", "E 350 w211", "E 350 ამგ", "E 36 AMG", "E 400", "E 420", "E 430", "E 50", "E 500", "E 500 AMG", "E 500 AVG", "E 55", "E 550", "G 230 2.2cdi", "G 300", "G 320", "G 350", "G 55 AMG", "G 550", "G 63 AMG", "G 65 AMG 63AMG", "G 65 AMG G63 AMG", "GL 320", "GL 320 bluetec", "GL 350", "GL 350 BLUETEC", "GL 350 BLUTEC", "GL 350 Bluetec", "GL 350 დიზელი", "GL 450", "GL 450 3.0", "GL 500", "GL 550", "GL 63 AMG", "GLA 200", "GLA 250", "GLC 250", "GLC 300", "GLC 300 GLC coupe", "GLE 350", "GLE 400", "GLE 400 A M G", "GLE 400 Coupe, AMG Kit", "GLE 43 AMG", "GLE 450", "GLE 63 AMG", "GLK 250", "GLK 300", "GLK 350", "GLS 450", "GLS 63 AMG", "ML 250", "ML 270", "ML 270 CDI", "ML 280", "ML 280 სასწრაფოდ", "ML 300", "ML 320", "ML 320 AMG", "ML 320 cdi", "ML 350", "ML 350 3.7", "ML 350 370", "ML 350 4 MATIC", "ML 350 4matic", "ML 350 BLUETEC", "ML 350 ML350", "ML 350 SPECIAL EDITION", "ML 350 sport", "ML 500", "ML 500 AMG", "ML 55 AMG", "ML 550", "ML 550 4.7", "ML 63 AMG", "R 320", "R 350", "R 350 BLUETEC", "S 320", "S 350", "S 350 CDI 320", "S 350 Longia", "S 350 W2222", "S 400", "S 420", "S 430", "S 430 4.3", "S 500", "S 500 67", "S 500 long", "S 55 5.5", "S 550", "S 550 LONG", "S 550 ჰიბრიდი", "S 600", "S 63 AMG", "SL 55 AMG", "SLK 230", "SLK 32 AMG", "SLK 350 300", "Smart", "Smart Fortwo", "Sprinter", "Sprinter 308 CDI", "Sprinter 311", "Sprinter 313", "Sprinter 313CDI", "Sprinter 314", "Sprinter 315CDI", "Sprinter 315CDI-XL", "Sprinter 316", "Sprinter 316 CDI", "Sprinter 411", "Sprinter 516", "Sprinter EURO4", "Sprinter MAX", "Sprinter Maxi-ს Max", "Sprinter VAN", "Sprinter VIP CLASS", "Sprinter სატვირთო", "V 230", "Vaneo", "Viano", "Viano Ambiente", "Vito", "Vito 110d", "Vito 111", "Vito 111 CDI", "Vito 113", "Vito 115", "Vito 115 CDI", "Vito 2.2", "Vito Exstralong", "Vito Extra Long", "Vito Extralong", "Vito long115", "X 250", "X 250 ევროპული"], "MERCURY": ["Cougar", "Mariner", "Mariner Hybrid"], "MINI": ["Cooper", "Cooper CLUBMAN", "Cooper F-56", "Cooper S", "Cooper S Cabrio", "Cooper S Cabrio R56", "Cooper r50", "Countryman", "Countryman S", "Countryman S turbo", "Countryman s", "Countryman sport", "One", "Paceman"], "MITSUBISHI": ["Airtrek", "Airtrek turbo", "Carisma", "Chariot", "Colt", "Colt Lancer", "ColtPlus", "ColtPlus Plus", "Delica", "Delica 5", "Eclipse", "Eclipse ES", "Galant", "Galant GTS", "Grandis", "I", "L 200", "Lancer", "Lancer GT", "Lancer GTS", "Minica", "Mirage", "Montero", "Montero Sport", "Outlander", "Outlander 2.0", "Outlander SE", "Outlander SPORT", "Outlander Sport", "Outlander sport", "Outlander xl", "Outlander სპორტ", "Pajero", "Pajero 2.5diezel", "Pajero IO", "Pajero MONTERO", "Pajero Mini", "Pajero Mini 2008 წლიანი", "Pajero Mini 2010 წლიანი", "Pajero Sport", "RVR", "Space Runner"], "MOSKVICH": ["2140", "400", "401"], "NISSAN": ["100 NX", "370Z", "Almera", "Almera dci", "Altima", "Armada", "Bluebird", "Cefiro", "Elgrand", "Frontier", "Fuga", "Gloria", "Juke", "Juke Juke", "Juke NISMO", "Juke Nismo", "Juke Nismo RS", "Juke Turbo", "Juke juke", "Juke nismo", "Kicks", "Kicks SR", "LAFESTA", "LATIO", "Leaf", "March", "March 231212", "March Rafeet", "Maxima", "Micra", "Micra <DIESEL>", "Moco", "Murano", "Navara", "Note", "Pathfinder", "Pathfinder SE", "Patrol", "Patrol Y60", "Presage", "Presage RIDER", "Primera", "Qashqai Advance CVT", "Qashqai SPORT", "Quest", "Quest 2016", "Rasheen", "Rogue", "Rogue SL", "Rogue SPORT", "Rogue Sport", "Sentra", "Serena", "Serena Serea", "Silvia", "Skyline", "Skyline 4WD", "Skyline GT250", "Teana", "Terrano", "Tiida", "Tiida 15 M", "Tiida 2008", "Tiida AXIS", "Tiida Latio", "Vanette", "Versa", "Versa SE", "Versa s", "Wingroad", "X-Terra", "X-Trail", "X-Trail NISMO", "X-Trail NISSAN X TRAIL R", "X-Trail X-trail", "X-Trail gt"], "OPEL": ["Agila", "Astra", "Astra 1600", "Astra A.H", "Astra BERTONE", "Astra CNG", "Astra G", "Astra GE", "Astra GTC 1.9 turbo dies", "Astra H", "Astra astra", "Astra g", "Astra gi", "Astra j", "Astra suzuki mr wagon", "Astra td", "Combo", "Combo 1700", "Combo 2001", "Combo TDI", "Corsa", "Corsa Corsa", "Crossland X", "Frontera", "Frontera A B", "INSIGNIA", "Meriva", "Monterey", "Omega", "Omega 1", "Omega B", "Omega b", "Omega c", "Sintra", "Tigra", "Vectra", "Vectra 1.6", "Vectra B", "Vectra C", "Vectra H", "Vectra b", "Vectra c", "Vectra ბ", "Zafira", "Zafira B"], "PEUGEOT": ["206", "206 CC", "207", "3008", "3008 2.0", "307", "406", "407", "508", "607", "807"], "PONTIAC": ["G6"], "PORSCHE": ["911", "911 meqanika", "Cayenne", "Cayenne S", "Cayenne s", "Cayman", "Panamera", "Panamera 4", "Panamera GTS", "Panamera S", "macan", "macan S"], "RENAULT": ["Captur QM3 Samsung", "Clio", "Duster", "Kangoo", "Kangoo Waggon", "Laguna", "Megane", "Megane 1.5CDI", "Megane 1.9 CDI", "Megane 1.9CDI", "Megane 19", "Megane 5", "Megane GT Line", "Scenic", "Twingo"], "ROLLS-ROYCE": ["Phantom"], "ROVER": ["200", "216", "416"], "SAAB": ["09-Mar"], "SATURN": ["Vue"], "SCION": ["iA isti", "tC", "xD"], "SEAT": ["Ibiza", "Leon"], "SKODA": ["Fabia", "Octavia", "Octavia SCOUT", "Octavia Scout", "Superb"], "SSANGYONG": ["Actyon", "Korando", "Kyron", "REXTON", "REXTON SUPER"], "SUBARU": ["B9 Tribeca", "BRZ", "Crosstrek", "Forester", "Forester 4x4", "Forester CrossSport", "Forester L.L.BEAN", "Forester SH", "Forester XT", "Forester cross sport", "Forester stb", "Impreza", "Impreza G4", "Impreza Sport", "Impreza WRX/STI LIMITED", "Legacy", "Legacy B4", "Legacy B4 twin turbo", "Legacy Bl5", "Legacy Outback", "Legacy b4", "Legacy bl5", "Outback", "Outback 2007", "Outback 3.0", "Outback Limited", "R2", "Sambar", "Stella", "XV", "XV HYBRID", "XV LIMITED"], "SUZUKI": ["Aerio SX", "Alto Lapin", "CERVO", "Escudo", "Every Landy NISSAN SEREN", "Grand Vitara", "HUSTLER", "Ignis", "Jimny", "Jimny GLX", "Kizashi", "Kizashi sporti", "Liana", "SJ 413 Samurai", "SX4", "Samurai", "Swift", "Swift Sport", "Vitara", "Vitara GL+", "XL7", "XL7 limited"], "TESLA": ["Model X"], "TOYOTA": ["4Runner", "4Runner LIMITED", "Alphard", "Altezza", "Aqua", "Aqua G", "Aqua G klas", "Aqua HIBRID", "Aqua L paketi", "Aqua S", "Aqua g soft leather sele", "Aqua s", "Aqua sport", "Aqua სასწრაფოდ", "Auris", "Avalon", "Avalon LIMITED", "Avalon Limited", "Avalon limited", "Avensis", "BB", "Belta", "CHR", "CHR Limited", "Caldina", "Cami", "Camry", "Camry HYBRID", "Camry Hybrid", "Camry LE", "Camry Le", "Camry S", "Camry SE", "Camry SE HIBRYD", "Camry SPORT", "Camry SPORT PAKET", "Camry Se", "Camry XLE", "Camry XLEi", "Camry XSE", "Camry XV50", "Camry se", "Camry sel", "Camry sport", "Camry sport se", "Camry sporti", "Camry ჰიბრიდი", "Celica", "Century", "Corolla", "Corolla 04", "Corolla 140", "Corolla ECO", "Corolla IM", "Corolla Im", "Corolla LE", "Corolla S", "Corolla se", "Corolla spacio", "Corolla verso", "Estima", "FJ Cruiser", "Fortuner", "Fun Cargo", "Grand HIACE", "Harrier", "Hiace", "Highlander", "Highlander 2,4", "Highlander 2.4 lit", "Highlander LIMITED", "Highlander XLE", "Highlander limited", "Highlander sport", "Hilux", "Hilux Surf", "ISIS", "Ipsum", "Ipsum S", "Ist", "Ist 1.5", "Land Cruiser", "Land Cruiser 100", "Land Cruiser 105", "Land Cruiser 11", "Land Cruiser 200", "Land Cruiser 80", "Land Cruiser PRADO", "Land Cruiser Prado", "Land Cruiser Prado RX", "Mark X", "Mark X Zio", "Matrix XR", "Noah", "Passo", "Prius", "Prius 1.5I", "Prius 1.8", "Prius 11", "Prius 2014", "Prius 3", "Prius 9", "Prius BLUG-IN", "Prius C", "Prius C 1.5I", "Prius C 2013", "Prius C 80 original", "Prius C Hybrid", "Prius C Navigation", "Prius C YARIS IA", "Prius C aqua", "Prius C hybrid", "Prius C ჰიბრიდი", "Prius Plug IN", "Prius Plug in", "Prius S", "Prius TSS LIMITED", "Prius V", "Prius V ALPINA", "Prius V HIBRID", "Prius V HYBRID", "Prius personna", "Prius plagin", "Prius plug-in", "Prius plugin", "Prius prius", "Prius s", "Prius ფლაგინი", "Prius ჰიბრიდი", "RAV 4", "RAV 4 Dizel", "RAV 4 L", "RAV 4 LIMITED", "RAV 4 Le", "RAV 4 SPORT", "RAV 4 SUPER!!!", "RAV 4 XLE", "RAV 4 XLE Sport", "RAV 4 s p o r t", "RAV 4 se", "Ractis", "Sai", "Sequoia", "Sienna", "Sienta", "Sienta LE", "Tacoma", "Tacoma TRD Off Road", "Tundra", "VOXY", "VOXY 2003", "Venza", "Verso", "Vitz", "Vitz RS", "Vitz funkargo", "Vitz i.ll", "Will Chypa", "Will Vs", "Wish", "Yaris", "Yaris IA", "Yaris RS", "Yaris SE", "Yaris iA"], "UAZ": ["31514", "31514 UAZ", "Patriot"], "VAZ": ["1111", "2101 01", "2103 03", "2105", "2106", "2107", "2107 07", "2109", "2111", "2121 (Niva)", "Vesta"], "VOLKSWAGEN": ["1500,1600 Schtufenheck", "Bora", "CC", "CC 2.0 T", "CC R line", "CC sport", "Caddy", "Caddy cadi", "Crafter", "Crafter 2,5TDI", "Crafter 2.5 TDI", "Eos", "GTI", "Golf", "Golf 1.8", "Golf 2", "Golf 3", "Golf 4", "Golf 6", "Golf GOLF 5", "Golf GTI", "Golf Gti", "Golf TDI", "Jetta", "Jetta 1.4 TURBO", "Jetta 2", "Jetta 2.0", "Jetta GLI", "Jetta Hybrid", "Jetta SE", "Jetta SEL", "Jetta SPORT", "Jetta TDI", "Jetta s", "Jetta se", "Jetta sei", "Jetta sel", "Jetta sport", "Jetta სასწაფოდ", "Jetta სპორტ", "Lupo", "Lupo iaponuri", "NEW Beetle", "Passat", "Passat 2.0 tfsi", "Passat B5", "Passat B7", "Passat R-line", "Passat RLAINI", "Passat SE", "Passat SEL", "Passat Se", "Passat pasat", "Passat se", "Passat sel", "Passat sport", "Passat tdi sel", "Passat tsi-se", "Phaeton", "Polo", "Polo GTI 16V", "Routan SEL", "Scirocco", "Sharan", "T3", "T3 0000", "T5", "Tiguan", "Tiguan SE", "Touareg", "Touran", "Transporter", "UP", "Vento"], "VOLVO": ["940", "960", "C30 2010", "C70", "S40", "S60", "S70", "S80", "V50", "XC90", "XC90 2.5turbo", "XC90 3.2 AWD"], "ZAZ": ["969 968m", "969 luaz"], "სხვა": ["GONOW", "IVECO DAYLY"]};
+
+        const manufacturerSelect = document.getElementById("Manufacturer");
+        const modelSelect = document.getElementById("Model");
+
+        function populateModels(selectedModel = "") {
+            const models = modelsByManufacturer[manufacturerSelect.value] || [];
+            modelSelect.innerHTML = '<option value="">-- Select Model --</option>';
+            models.forEach(m => {
+                const opt = document.createElement("option");
+                opt.value = m;
+                opt.textContent = m;
+                if (m === selectedModel) opt.selected = true;
+                modelSelect.appendChild(opt);
+            });
+        }
+
+        manufacturerSelect.addEventListener("change", () => populateModels());
+
+        // القيمة الافتراضية: LEXUS + RX 450
+        manufacturerSelect.value = "LEXUS";
+        populateModels("RX 450");
+
+        // السيارات: اكبس عليها لتتحرك
+        document.querySelectorAll('.car').forEach(c => {
+            c.addEventListener('click', () => {
+                c.classList.remove('go');
+                void c.offsetWidth; // إعادة تشغيل الأنيميشن
+                c.classList.add('go');
+            });
+            c.addEventListener('animationend', e => {
+                if (e.target === c) c.classList.remove('go');
+            });
+        });
+
+        async function submitForm() {
+            const btn = document.getElementById('predictBtn');
+            btn.disabled = true;
+            btn.textContent = 'Predicting...';
+            const form = document.getElementById('predictionForm');
+            const formData = new FormData(form);
+            const data = {};
+
+            // Convert form data to JSON object
+            formData.forEach((value, key) => {
+                // Parse numbers where applicable
+                if (!isNaN(Number(value)) && value !== "") {
+                    data[key] = parseFloat(value);
+                } else {
+                    data[key] = value;
+                }
+            });
+
+            console.log("Data being sent:", data); // Debugging
+
+            try {
+                const response = await fetch("http://127.0.0.1:8000/predict/", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(data) // Send data as JSON
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    document.getElementById("output").innerHTML =
+                        `<div class="alert alert-success">Prediction: ${JSON.stringify(result["prediction"])}</div>`;
+                } else {
+                    const error = await response.json();
+                    document.getElementById("output").innerHTML =
+                        `<div class="alert alert-danger">Error: ${JSON.stringify(error.detail)}</div>`;
+                }
+            } catch (err) {
+                document.getElementById("output").innerHTML =
+                    `<div class="alert alert-danger">An unexpected error occurred: ${err}</div>`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Predict';
+            }
+        }
+    </script>
+</body>
+</html>
