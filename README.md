@@ -119,21 +119,6 @@ Used-Car-Price-Prediction/
 └── .gitignore
 ```
 
-## ⚠️ Notes
-
-The trained model and encoder files are not included in this repository because of their large file sizes.
-
-The project is mainly intended as a **Machine Learning learning project** and can be further improved with hyperparameter tuning and more advanced models.
-
-## 🔜 Future Improvements
-
-* Hyperparameter tuning
-* Try **XGBoost**
-* Try **CatBoost**
-* Improve categorical feature handling
-* Use a fixed reference year for the `Age` feature
-* Improve model performance and generalization
-
 ## 🛠️ Technologies
 
 * Python
